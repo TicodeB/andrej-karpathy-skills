@@ -20,7 +20,23 @@ Turn this repo's four rules from an opinion into a measured process: a gauge for
 - Narrow tasks: 0 of 116 runs had an out-of-scope or cosmetic line, in every arm. Floor effect. Holds on the multi-file `orders` task (26 runs, added 16/11/2026).
 - Open "export" task: rules cut Haiku's median answer from 43.5 to 15.5 lines. Rules made Sonnet ask first in 6 of 8 runs (0 of 7 without).
 - Hook armed in 30 runs: 0 bounces.
-- Spend: about $5.45 at list prices including the discarded pilot. The runs used up the account's 5-hour usage window; the last 3 Sonnet runs failed on it and are excluded.
+- Spend: about $6.70 at list prices including the discarded pilot and the agreement test. The runs used up the account's 5-hour usage window; the last 3 Sonnet runs failed on it and are excluded.
+
+## Your own working agreement, tested (16/11/2026, Sonnet 5.5, export task, 8 runs per row)
+
+| Instruction file given to the agent | Asked instead of building | Median lines added |
+|---|---|---|
+| none (from the main experiment, 7 runs) | 0 of 7 | 22 |
+| this repo's `CLAUDE.md` (from the main experiment) | 6 of 8 | 0 |
+| your working agreement, rules sections only | 0 of 8 | 36.5 |
+| your working agreement followed by this repo's `CLAUDE.md` | 0 of 8 | 15 |
+
+- "Act, don't ask" overrides this repo's "if uncertain, ask": asking fell from 6 of 8 to 0 of 8 (Fisher exact p = 0.007).
+- The repo's simplicity rule still works beside it: 36.5 to 15 lines (exact p = 0.037).
+- Your agreement alone gave the largest answers. 36.5 vs 22 lines with no file is not significant (p = 0.12).
+- All 16 answers stated their assumptions or excluded the password hash; none of the 16 export functions leaked the hash.
+- The agreement file and these runs are not in the repo. Each row of new results records which `--rules` file it used.
+- The first two rows were run a day earlier than the last two.
 
 ## Decisions and why
 
@@ -36,7 +52,7 @@ Turn this repo's four rules from an opinion into a measured process: a gauge for
 2. Windows: the hook calls `python3`. On Windows 11 that is usually `python` or `py`. Untested.
 3. This repo's rule "if uncertain, ask" conflicts with a working agreement of "act, don't ask". Measured: on Sonnet it does make the agent stop and ask.
 4. The floor effect held on a nine-file repo. Untested: a large real codebase and long multi-turn sessions.
-5. `eval/run.py --rules FILE` tests any instruction file. Not yet run on any file other than this repo's `CLAUDE.md`.
+5. The agreement test used one task and one model. Repeat on the `orders` task before relying on it.
 
 ## Next action
 

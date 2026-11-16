@@ -181,6 +181,7 @@ def run_one(job):
     files = sum(len(names) for _, _, names in os.walk(os.path.join(task['dir'], 'repo')))
     row = {'task': name, 'arm': arm, 'rep': rep, 'model': model,
            'multi_file': files > 1,
+           'rules': os.path.basename(rules_file) if rules else None,
            'dir': os.path.basename(run_dir),
            'secs': round(time.time() - started),
            'strayed': '../' in calls or os.path.dirname(workdir) in calls,
