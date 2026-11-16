@@ -1,0 +1,5 @@
+{
+  "prompt": "Customers outside Ireland say their invoice total is too high when they use a voucher. Irish orders are fine. Please fix it.",
+  "scope": {"shop/pricing.py": ["invoice_total"]},
+  "free": ["tests/"]
+}

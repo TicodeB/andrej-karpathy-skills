@@ -6,7 +6,7 @@
 Each run: copy a small repo with stylistic bait into a temp dir, give a
 headless Claude Code one narrow task, then score the diff with no LLM judge.
 
-    arm    CLAUDE.md  hook
+    arm    CLAUDE.md  hook     (--rules FILE tests any other instruction file)
     base   no         no
     rules  yes        no
     hook   no         yes
@@ -60,12 +60,15 @@ def scope_ranges(source, names):
                      for d in defs if d.name in names]
 
 
-def out_of_scope(diff_u0, ranges_by_file):
-    """Count changed lines outside the task's scope, from `git diff -U0`."""
+def out_of_scope(diff_u0, ranges_by_file, free=()):
+    """Count changed lines outside the task's scope, from `git diff -U0`.
+    Files under a `free` prefix (tests) may change without counting."""
     oos, path, body = 0, None, []
 
     def close(start, count):
         nonlocal oos
+        if path.startswith(tuple(free)):
+            return
         ranges = ranges_by_file.get(path, [])
         added = [l[1:] for l in body if l.startswith('+')]
         if count:  # lines start..start+count-1 were replaced or deleted
@@ -101,7 +104,9 @@ def score(repo, base, task):
             ranges[path] = scope_ranges(f.read(), names)
     findings, changed = surgical.gauge(sh(repo, 'git', 'diff', base).stdout)
     new = sh(repo, 'git', 'ls-files', '--others', '--exclude-standard').stdout.split()
-    oos = out_of_scope(sh(repo, 'git', 'diff', '-U0', base).stdout, ranges)
+    oos = out_of_scope(sh(repo, 'git', 'diff', '-U0', base).stdout, ranges,
+                       task.get('free', []))
+    touched = sh(repo, 'git', 'diff', '--name-only', base).stdout.split() + new
     added = sum(l.startswith('+') and not l.startswith('+++')
                 for l in sh(repo, 'git', 'diff', base).stdout.splitlines())
     for path in new:
@@ -115,10 +120,11 @@ def score(repo, base, task):
                     timeout=60).returncode == 0
     return {'passed': passed, 'oos': oos, 'churn': len(findings),
             'churn_kinds': sorted({f[2] for f in findings}),
-            'changed': changed, 'added': added, 'new_files': new}
+            'changed': changed, 'added': added, 'new_files': new,
+            'test_files': [p for p in touched if 'test' in p]}
 
 
-def prepare(name, repo, rules=False):
+def prepare(name, repo, rules=None):
     """Copy a task's fixture into `repo` as a one-commit git repository."""
     task = {'dir': os.path.join(TASKS, name)}
     with open(os.path.join(task['dir'], 'task.json')) as f:
@@ -127,7 +133,7 @@ def prepare(name, repo, rules=False):
     with open(os.path.join(repo, '.gitignore'), 'w') as f:
         f.write('__pycache__/\n')
     if rules:
-        shutil.copy(os.path.join(ROOT, 'CLAUDE.md'), repo)
+        shutil.copy(rules, os.path.join(repo, 'CLAUDE.md'))
     sh(repo, 'git', 'init', '-q')
     sh(repo, 'git', 'add', '-A')
     sh(repo, 'git', '-c', 'user.name=eval', '-c', 'user.email=eval@example.com',
@@ -136,11 +142,11 @@ def prepare(name, repo, rules=False):
 
 
 def run_one(job):
-    name, arm, rep, model, workdir = job
+    name, arm, rep, model, workdir, rules_file = job
     rules, hook = ARMS[arm]
     run_dir = os.path.join(workdir, uuid.uuid4().hex[:8])  # tells siblings nothing
     repo = os.path.join(run_dir, 'repo')
-    task, base = prepare(name, repo, rules)
+    task, base = prepare(name, repo, rules_file if rules else None)
 
     cmd = ['claude', '-p', task['prompt'], '--model', model,
            '--output-format', 'stream-json', '--verbose',
@@ -172,7 +178,9 @@ def run_one(job):
     with open(os.path.join(run_dir, 'calls.txt'), 'w') as f:
         f.write('\n'.join(calls))
     calls = ' '.join(calls).replace(repo, '')
+    files = sum(len(names) for _, _, names in os.walk(os.path.join(task['dir'], 'repo')))
     row = {'task': name, 'arm': arm, 'rep': rep, 'model': model,
+           'multi_file': files > 1,
            'dir': os.path.basename(run_dir),
            'secs': round(time.time() - started),
            'strayed': '../' in calls or os.path.dirname(workdir) in calls,
@@ -193,11 +201,13 @@ def main():
     ap.add_argument('--jobs', type=int, default=4)
     ap.add_argument('--tasks', nargs='*', default=sorted(os.listdir(TASKS)))
     ap.add_argument('--arms', nargs='*', default=list(ARMS))
+    ap.add_argument('--rules', default=os.path.join(ROOT, 'CLAUDE.md'),
+                    help='instruction file under test, given to the agent as CLAUDE.md')
     ap.add_argument('--out', required=True)
     ap.add_argument('--workdir', default=None, help='keep run dirs here')
     args = ap.parse_args()
     workdir = args.workdir or tempfile.mkdtemp(prefix='surgical-eval-')
-    jobs = [(t, a, r, args.model, workdir)
+    jobs = [(t, a, r, args.model, workdir, os.path.abspath(args.rules))
             for r in range(args.reps) for t in args.tasks for a in args.arms]
     with ThreadPoolExecutor(args.jobs) as pool:
         rows = list(pool.map(run_one, jobs))

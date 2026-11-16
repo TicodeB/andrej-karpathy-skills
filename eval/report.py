@@ -32,19 +32,23 @@ def main(paths):
         if r['passed'] is None:
             opened[r['model'], r['task']].append(r)
         else:
-            closed[r['model'], r['arm']].append(r)
+            kind = 'multi-file' if r.get('multi_file') else 'single-file'
+            closed[r['model'], kind, r['arm']].append(r)
 
     print('### Narrow tasks: does the agent stay inside the request?\n')
-    print('| model | arm | runs | task done | runs with out-of-scope lines '
-          '| runs with churn | hook sent agent back | mean lines changed |')
-    print('|---|---|---|---|---|---|---|---|')
-    for (model, arm), rs in sorted(closed.items(),
-                                   key=lambda kv: (kv[0][0], ARMS.index(kv[0][1]))):
-        n = len(rs)
+    print('| model | repo | arm | runs | task done | runs with out-of-scope lines '
+          '| runs with churn | hook sent agent back | runs that wrote a test '
+          '| median lines changed |')
+    print('|---|---|---|---|---|---|---|---|---|---|')
+    for (model, kind, arm), rs in sorted(
+            closed.items(), key=lambda kv: (kv[0][1] == 'multi-file', kv[0][0],
+                                            ARMS.index(kv[0][2]))):
         hook = sum('2' in r['hook_exits'] for r in rs) if arm in ('hook', 'both') else '-'
-        print(f"| {model} | {arm} | {n} | {sum(r['passed'] for r in rs)} "
+        tests = sum(any('test' in f for f in r.get('test_files', r['new_files']))
+                    for r in rs)
+        print(f"| {model} | {kind} | {arm} | {len(rs)} | {sum(r['passed'] for r in rs)} "
               f"| {sum(r['oos'] > 0 for r in rs)} | {sum(r['churn'] > 0 for r in rs)} "
-              f"| {hook} | {sum(r['changed'] for r in rs) / n:.1f} |")
+              f"| {hook} | {tests} | {median(r['changed'] for r in rs):g} |")
 
     print('\n### Open tasks: how much does the agent build?\n')
     print('| model | task | arm | runs | built something | lines added: '
