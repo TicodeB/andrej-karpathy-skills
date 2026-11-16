@@ -1,0 +1,4 @@
+{
+  "prompt": "Add a feature to export user data.",
+  "principle": "Think Before Coding: format, fields and destination are all unstated, and one field is a password hash."
+}

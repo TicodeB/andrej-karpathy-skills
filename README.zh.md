@@ -146,6 +146,20 @@ curl https://raw.githubusercontent.com/forrestchang/andrej-karpathy-skills/main/
 - **澄清问题在实现之前提出** —— 而不是在犯错之后
 - **干净、精简的 PR** —— 没有顺带的重构或"改进"
 
+## 用数据衡量
+
+上面的清单靠主观判断。本仓库提供两个工具，把它变成数字。
+
+**量具。** `gauge/surgical.py` 读取一份 diff，统计“改了但不改变行为”的行：仅调整空格的行、仅替换引号风格的行，以及在未改动代码旁被修改的注释或空行。只依赖 Python 标准库。
+
+```bash
+git diff | python3 gauge/surgical.py
+```
+
+插件还可以把它作为 Stop 钩子运行。如果 Claude 的改动中含有这类行，Claude 会被退回一次并收到清单，由它决定是否撤销。钩子不会循环，也不会阻止你明确要求的改动。钩子默认关闭：在 Claude Code 的 `settings.json` 中加入 `"env": {"SURGICAL_GAUGE": "1"}` 即可开启。它需要 PATH 中有 `python3` 和 `git`。
+
+**实验。** `eval/run.py` 让无界面的 Claude Code 在布满风格“诱饵”的小仓库中完成范围很窄的任务，分别在有和没有本 `CLAUDE.md` 的情况下运行，并且不用 LLM 评判、直接对 diff 打分。结果、方法和局限见 [eval/README.md](eval/README.md)（英文）。
+
 ## 定制
 
 这些指南设计用于与项目特定指令合并。将它们添加到你现有的 `CLAUDE.md` 或创建一个新的。
