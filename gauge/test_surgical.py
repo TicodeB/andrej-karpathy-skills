@@ -113,11 +113,18 @@ class Hook(unittest.TestCase):
         with open(os.path.join(self.cwd, 'app.py'), 'w') as f:
             f.write(text)
 
-    def run_hook(self, mode, **extra):
+    def run_hook(self, mode, switch='1', **extra):
         return subprocess.run(
             [sys.executable, os.path.join(HERE, 'surgical.py'), mode],
             input=json.dumps({**self.event, **extra}),
+            env={**os.environ, 'SURGICAL_GAUGE': switch},
             capture_output=True, text=True)
+
+    def test_hook_is_off_unless_switched_on(self):
+        self.run_hook('--snapshot')
+        self.write('x = "a"\ny = 1\n')
+        self.assertEqual(self.run_hook('--hook', switch='').returncode, 0)
+        self.assertEqual(self.run_hook('--hook').returncode, 2)
 
     def test_churn_sends_the_agent_back_once(self):
         self.run_hook('--snapshot')

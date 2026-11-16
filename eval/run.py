@@ -164,9 +164,10 @@ def run_one(job):
                       f'{py} --hook; rc=$?; echo $rc >> "{log}"; exit $rc'}]}],
         }})]
     started = time.time()
+    env = {**os.environ, 'SURGICAL_GAUGE': '1'}  # the hook is opt-in
     out, calls = {'is_error': True}, []
     try:
-        for line in sh(repo, *cmd, timeout=600).stdout.splitlines():
+        for line in sh(repo, *cmd, timeout=600, env=env).stdout.splitlines():
             event = json.loads(line)
             if event.get('type') == 'result':
                 out = event

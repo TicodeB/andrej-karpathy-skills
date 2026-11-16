@@ -156,7 +156,7 @@ The list above is a judgement call. Two tools in this repo turn it into numbers.
 git diff | python3 gauge/surgical.py
 ```
 
-The plugin also runs it as a Stop hook. If Claude's changes contain such lines, Claude is sent back once with the list and decides whether to revert them. It never loops and never blocks a change you asked for. The hook needs `python3` and `git` on your PATH.
+The plugin can also run it as a Stop hook. If Claude's changes contain such lines, Claude is sent back once with the list and decides whether to revert them. It never loops and never blocks a change you asked for. The hook is off by default. Turn it on by adding `"env": {"SURGICAL_GAUGE": "1"}` to your Claude Code `settings.json`. It needs `python3` and `git` on your PATH.
 
 **The experiment.** `eval/run.py` gives headless Claude Code narrow tasks in small repos full of stylistic bait, with and without this `CLAUDE.md`, and scores the diffs with no LLM judge. Results, method and limits are in [eval/README.md](eval/README.md).
 

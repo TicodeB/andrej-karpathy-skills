@@ -5,6 +5,8 @@
     python3 surgical.py --snapshot     UserPromptSubmit hook: remember the tree
     python3 surgical.py --hook         Stop hook: gauge the diff since snapshot
 
+The two hook modes do nothing unless the environment has SURGICAL_GAUGE=1.
+
 Four defect classes, all detectable with no knowledge of the task:
     whitespace  line re-spaced, nothing else changed
     quotes      quote style swapped, nothing else changed
@@ -157,6 +159,8 @@ def hook(event):
 
 
 def main(argv):
+    if argv[1:] in (['--snapshot'], ['--hook']) and os.environ.get('SURGICAL_GAUGE') != '1':
+        return 0  # the hook is opt-in
     if argv[1:] == ['--snapshot']:
         snapshot(json.load(sys.stdin))
         return 0

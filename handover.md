@@ -48,7 +48,7 @@ Turn this repo's four rules from an opinion into a measured process: a gauge for
 
 ## Open
 
-1. Decide: should the Stop hook ship on by default for every plugin user? It changes behaviour for people who only wanted the rules. Version in `plugin.json` is not bumped.
+1. Done 16/11/2026: the Stop hook is opt-in (`SURGICAL_GAUGE=1`). Plugin users who only want the rules see no change. Version in `plugin.json` is not bumped.
 2. Windows: the hook calls `python3`. On Windows 11 that is usually `python` or `py`. Untested.
 3. This repo's rule "if uncertain, ask" conflicts with a working agreement of "act, don't ask". Measured: on Sonnet it does make the agent stop and ask.
 4. The floor effect held on a nine-file repo. Untested: a large real codebase and long multi-turn sessions.
@@ -56,4 +56,4 @@ Turn this repo's four rules from an opinion into a measured process: a gauge for
 
 ## Next action
 
-Review the draft PR. Answer open item 1.
+Review the draft PR.
