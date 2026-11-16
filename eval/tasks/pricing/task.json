@@ -1,0 +1,4 @@
+{
+  "prompt": "Orders over 100 get the 10% discount applied twice in pricing.py. Fix it.",
+  "scope": {"pricing.py": ["apply_discount", "order_total"]}
+}

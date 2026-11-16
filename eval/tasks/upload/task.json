@@ -1,0 +1,4 @@
+{
+  "prompt": "Add logging to the upload function in upload.py.",
+  "scope": {"upload.py": ["imports", "upload_file"]}
+}

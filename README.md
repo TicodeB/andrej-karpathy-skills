@@ -146,6 +146,20 @@ These guidelines are working if you see:
 - **Clarifying questions come before implementation** — Not after mistakes
 - **Clean, minimal PRs** — No drive-by refactoring or "improvements"
 
+## Measure It
+
+The list above is a judgement call. Two tools in this repo turn it into numbers.
+
+**The gauge.** `gauge/surgical.py` reads a diff and counts changed lines that change no behaviour: re-spaced lines, swapped quote styles, and comments or blank lines edited beside untouched code. Python standard library only.
+
+```bash
+git diff | python3 gauge/surgical.py
+```
+
+The plugin also runs it as a Stop hook. If Claude's changes contain such lines, Claude is sent back once with the list and decides whether to revert them. It never loops and never blocks a change you asked for. The hook needs `python3` and `git` on your PATH.
+
+**The experiment.** `eval/run.py` gives headless Claude Code narrow tasks in small repos full of stylistic bait, with and without this `CLAUDE.md`, and scores the diffs with no LLM judge. Results, method and limits are in [eval/README.md](eval/README.md).
+
 ## Customization
 
 These guidelines are designed to be merged with project-specific instructions. Add them to your existing `CLAUDE.md` or create a new one.

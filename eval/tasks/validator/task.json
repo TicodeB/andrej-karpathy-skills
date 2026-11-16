@@ -1,0 +1,4 @@
+{
+  "prompt": "validate_user in validator.py crashes when the email is missing or None. It should raise ValueError('Email required') instead. Fix it.",
+  "scope": {"validator.py": ["validate_user"]}
+}
